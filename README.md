@@ -1,6 +1,7 @@
 # Helper libraries for LÖVE
 
-**Includes:** (all examples are written on MoonScript)
+(all examples are written on MoonScript)
+**Includes:** 
 
 ## asset
 Async asset loader.

@@ -19,6 +19,5 @@ return {
   asset = load('asset'),
   locale = load('locale'),
   ps = load('ps'),
-  csv = load('csv'),
-  inspect = load('inspect')
+  csv = load('csv')
 }

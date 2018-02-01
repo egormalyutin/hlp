@@ -1,11 +1,12 @@
 #!/bin/bash
-if [[ $1 == *"build"* ]] || [[ $2 == *"build"* ]]; then
-	mkdir build
-	cp *.lua build 
-	echo 'Built!'
+if [[ $1 == *"clean"* ]]; then
+	echo 'Cleaning example stuff...'
+	rm examples main.*
+	echo "Success!"
 fi
 
-if [[ $1 == *"watch"* ]] || [[ $2 == *"watch"* ]]; then
+if [[ $1 == *"watch"* ]]; then
 	echo 'Starting watch!'
 	chokidar '**/*.moon' -c 'moonc {path}'
 fi
+

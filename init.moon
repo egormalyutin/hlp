@@ -18,5 +18,4 @@ return {
 	locale:  load 'locale'
 	ps:      load 'ps'
 	csv:     load 'csv'
-	inspect: load 'inspect'
 }
