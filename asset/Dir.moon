@@ -80,7 +80,7 @@ class Dir
 	_loaded: (data) =>
 		@_resources -= 1
 		on data for on in *@_onload
-		if @_resources == 0
+		if @_resources <= 0
 			@loaded = true
 
 	update: =>
@@ -99,6 +99,9 @@ class Dir
 
 				-- flatify tree
 				flt = flat @tree
+
+				if #flt <= 0
+					@_loaded!
 
 				for obj in *flt
 					-- add resoruce
