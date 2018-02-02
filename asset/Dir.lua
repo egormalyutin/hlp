@@ -70,7 +70,7 @@ do
         local on = _list_0[_index_0]
         on(data)
       end
-      if self._resources == 0 then
+      if self._resources <= 0 then
         self.loaded = true
       end
     end,
@@ -88,6 +88,9 @@ do
             assign(self.tree, data)
             self.assets = self.tree
             local flt = flat(self.tree)
+            if #flt <= 0 then
+              self:_loaded()
+            end
             for _index_0 = 1, #flt do
               local obj = flt[_index_0]
               self._resources = self._resources + 1
