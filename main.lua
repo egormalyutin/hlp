@@ -1,1 +1,1 @@
-return require('examples.locale-example')
+return require('examples.finder-example')
