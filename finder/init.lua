@@ -1,6 +1,5 @@
 local socket = require('socket')
 local PORT = 4550
-local PORT2 = PORT + 1
 local CHECK
 CHECK = function(a)
   return a .. ":handshake_checked"
@@ -19,10 +18,26 @@ local Server
 do
   local _class_0
   local _base_0 = {
+    listen = function(self, listener)
+      return table.insert(self._listeners, listener)
+    end,
+    emit = function(self, ...)
+      for _, listener in ipairs(self._listeners) do
+        listener(...)
+      end
+    end,
     update = function(self)
-      local message, address, port = self.udp:receivefrom()
+      local message, host, port = self.udp:receivefrom()
       if message == self.handshake then
-        return self.udp:sendto(self.check(message), address, port)
+        local obj = {
+          host = host,
+          port = port
+        }
+        if not (isIn(self._results, obj)) then
+          table.insert(self._results, obj)
+          self.udp:sendto(self.check(message), host, port)
+          return self:emit(host)
+        end
       end
     end,
     close = function(self)
@@ -52,7 +67,9 @@ do
         error(err)
       end
       self.udp:setsockname(self.host, self.port)
-      return self.udp:settimeout(self.timeout)
+      self.udp:settimeout(self.timeout)
+      self._results = { }
+      self._listeners = { }
     end,
     __base = _base_0,
     __name = "Server"
@@ -71,6 +88,14 @@ local Client
 do
   local _class_0
   local _base_0 = {
+    listen = function(self, listener)
+      return table.insert(self._listeners, listener)
+    end,
+    emit = function(self, ...)
+      for _, listener in ipairs(self._listeners) do
+        listener(...)
+      end
+    end,
     update = function(self)
       local message, host, port, err = self.udp:receivefrom()
       if message == self._checked then
@@ -80,16 +105,13 @@ do
         }
         if not (isIn(self._results, obj)) then
           table.insert(self._results, obj)
-          self:changed()
+          self:emit(host)
         end
       end
       if err then
         error(err)
       end
       return self.udp:sendto(self.handshake, "255.255.255.255", self.port)
-    end,
-    changed = function(self)
-      return print('Changed!')
     end,
     close = function(self)
       return self.udp:close()
@@ -103,7 +125,7 @@ do
       end
       self.host = settings.host or "*"
       self.port = settings.port or PORT
-      self.handshakePort = settings.handshakePort or settings.handshake_port or PORT2
+      self.handshakePort = settings.handshakePort or settings.handshake_port or self.port + 1
       self.timeout = settings.timeout or 0.1
       self.handshake = settings.handshake or HANDSHAKE
       self.check = settings.check or CHECK
@@ -123,6 +145,7 @@ do
       self.udp:settimeout(self.timeout)
       self._checked = self.check(self.handshake)
       self._results = { }
+      self._listeners = { }
     end,
     __base = _base_0,
     __name = "Client"

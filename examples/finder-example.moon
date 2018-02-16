@@ -6,12 +6,14 @@ srv = finder.Server {
 }
 cl  = finder.Client {
 	port: 8080
-	handshakePort: 8081
 	handshake: '93203'
 }
 
-print srv.handshake
-print cl.handshake
+srv\listen (address) ->
+	print address .. " connected to server!"
+
+cl\listen (address) ->
+	print "Found server " .. address .. "!"
 
 love.update = ->
 	srv\update!

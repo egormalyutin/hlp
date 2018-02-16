@@ -1,7 +1,6 @@
 socket = require 'socket'
 
 PORT  = 4550
-PORT2 = PORT + 1
 
 CHECK = (a) -> 
 	a .. ":handshake_checked"
@@ -33,15 +32,28 @@ class Server
 		@udp\setsockname @host, @port
 		@udp\settimeout @timeout
 
+		@_results = {}
+		@_listeners = {}
+
+	listen: (listener) =>
+		table.insert @_listeners, listener
+
+	emit: (...) =>
+		for _, listener in ipairs @_listeners
+			listener ...
 
 	update: =>
 		-- check messages
-		message, address, port = @udp\receivefrom!
+		message, host, port = @udp\receivefrom!
 
 
 		-- message is handshake? send it back to sender!
 		if message == @handshake
-			@udp\sendto @.check(message), address, port
+			obj = {:host, :port}
+			unless isIn @_results, obj
+				table.insert @_results, obj
+				@udp\sendto @.check(message), host, port
+				@emit host
 
 			-- Why @.check and not @check?
 			-- Because @.check compiles to self.check and @check compiles to self:check
@@ -55,7 +67,7 @@ class Client
 		-- settings
 		@host          = settings.host          or "*"
 		@port          = settings.port          or PORT
-		@handshakePort = settings.handshakePort or settings.handshake_port or PORT2
+		@handshakePort = settings.handshakePort or settings.handshake_port or @port + 1
 		@timeout       = settings.timeout       or 0.1
 		@handshake     = settings.handshake     or HANDSHAKE
 		@check         = settings.check         or CHECK
@@ -75,6 +87,15 @@ class Client
 
 		@_results = {}
 
+		@_listeners = {}
+
+	listen: (listener) =>
+		table.insert @_listeners, listener
+
+	emit: (...) =>
+		for _, listener in ipairs @_listeners
+			listener ...
+
 	update: =>
 		-- check messages
 		message, host, port, err = @udp\receivefrom!
@@ -84,16 +105,13 @@ class Client
 			obj = {:host, :port}
 			unless isIn @_results, obj
 				table.insert @_results, obj
-				@changed!
+				@emit host
 
 		-- throw error
 		error err if err
 
 		-- send handshake to world
 		@udp\sendto @handshake, "255.255.255.255", @port
-
-	changed: =>
-		print 'Changed!'
 
 	close: =>
 		@udp\close!

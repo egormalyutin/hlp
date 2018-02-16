@@ -5,11 +5,14 @@ local srv = finder.Server({
 })
 local cl = finder.Client({
   port = 8080,
-  handshakePort = 8081,
   handshake = '93203'
 })
-print(srv.handshake)
-print(cl.handshake)
+srv:listen(function(address)
+  return print(address .. " connected to server!")
+end)
+cl:listen(function(address)
+  return print("Found server " .. address .. "!")
+end)
 love.update = function()
   srv:update()
   return cl:update()
