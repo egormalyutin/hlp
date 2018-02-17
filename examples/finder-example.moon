@@ -9,10 +9,10 @@ cl  = finder.Client {
 	handshake: '93203'
 }
 
-srv\listen (address) ->
+srv\on 'connect', (address) ->
 	print address .. " connected to server!"
 
-cl\listen (address) ->
+cl\on 'connect', (address) ->
 	print "Found server " .. address .. "!"
 
 love.update = ->

@@ -1,5 +1,23 @@
 socket = require 'socket'
 
+current = (...)
+
+load = (path) ->
+	local LC_PATH
+	succ, loaded = pcall require, LC_PATH
+	unless succ
+		LC_PATH = current .. '.' .. path
+		succ, loaded = pcall require, LC_PATH
+		unless succ
+			LC_PATH =  current\gsub("%.[^%..]+$", "") .. '.' .. path
+			succ, loaded = pcall require, LC_PATH
+			unless succ
+				error loaded
+
+	return loaded, LC_PATH
+
+EventEmitter = load 'event'
+
 PORT  = 4550
 
 CHECK = (a) -> 
@@ -13,8 +31,13 @@ isIn = (arr, item) ->
 			return true
 	return false
 
-class Server
+
+
+
+
+class Server extends EventEmitter
 	new: (settings = {}) =>
+		super!
 		-- settings
 		@host      = settings.host      or "*"
 		@port      = settings.port      or PORT
@@ -33,14 +56,6 @@ class Server
 		@udp\settimeout @timeout
 
 		@_results = {}
-		@_listeners = {}
-
-	listen: (listener) =>
-		table.insert @_listeners, listener
-
-	emit: (...) =>
-		for _, listener in ipairs @_listeners
-			listener ...
 
 	update: =>
 		-- check messages
@@ -53,7 +68,7 @@ class Server
 			unless isIn @_results, obj
 				table.insert @_results, obj
 				@udp\sendto @.check(message), host, port
-				@emit host
+				@emit 'connect', host
 
 			-- Why @.check and not @check?
 			-- Because @.check compiles to self.check and @check compiles to self:check
@@ -61,8 +76,15 @@ class Server
 	close: =>
 		@udp\close!
 
-class Client
+
+
+
+
+
+
+class Client extends EventEmitter
 	new: (settings = {}) =>
+		super!
 
 		-- settings
 		@host          = settings.host          or "*"
@@ -87,15 +109,6 @@ class Client
 
 		@_results = {}
 
-		@_listeners = {}
-
-	listen: (listener) =>
-		table.insert @_listeners, listener
-
-	emit: (...) =>
-		for _, listener in ipairs @_listeners
-			listener ...
-
 	update: =>
 		-- check messages
 		message, host, port, err = @udp\receivefrom!
@@ -105,7 +118,7 @@ class Client
 			obj = {:host, :port}
 			unless isIn @_results, obj
 				table.insert @_results, obj
-				@emit host
+				@emit 'connect', host
 
 		-- throw error
 		error err if err
