@@ -1,3 +1,7 @@
+--- Set of helper libraries for developing games with LÖVE.
+-- @submodule hlp.asset
+-- @submodule hlp.event
+-- @module hlp
 current = (...)
 
 load = (path) ->
@@ -18,4 +22,5 @@ return {
 	locale:  load 'locale'
 	ps:      load 'ps'
 	csv:     load 'csv'
+	Finder:  load 'finder'
 }

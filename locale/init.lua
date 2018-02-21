@@ -126,12 +126,10 @@ Localization = function(...)
         values.current = v
         if values.locales[values.current] then
           return private.mount(values, values.current)
+        elseif not values.locales[values.fallback] then
+          return reporter.notFoundFallback()
         else
-          if not values.locales[values.fallback] then
-            return reporter.notFoundFallback()
-          else
-            return private.mount(values, values.fallback)
-          end
+          return private.mount(values, values.fallback)
         end
       else
         values[k] = v

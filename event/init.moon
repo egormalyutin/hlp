@@ -1,21 +1,32 @@
+--- EventEmitter implementation.
+-- @classmod hlp.event
+
+indexOf = (a, b) ->
+	for num, item in ipairs a
+		if item == b
+			return num
+	return -1
+
 class EventEmitter
+	--- Create a new EventEmitter.
 	new: =>
 		@_events = {}
-		@_once   = {}
+		@_once_events   = {}
 
-	-- create event table if it doesn't exist
-	_touch: (event) =>
+	_event_touch: (event) =>
 		-- simple events
 		unless @_events[event]
 			@_events[event] = {}
 
 		-- once events
-		unless @_once[event]
-			@_once[event] = {}
+		unless @_once_events[event]
+			@_once_events[event] = {}
 
-	-- add new listener
+	--- Add new listener.
+	-- @param event Name of event.
+	-- @param handler Handler of event.
 	on: (event, handler) =>
-		@_touch event
+		@_event_touch event
 
 		-- alias
 		handlers = @_events[event]
@@ -27,13 +38,15 @@ class EventEmitter
 		-- chaining
 		return @
 
-	-- add event, that can be called only once
+	--- Add new listener, that will be called only once.
+	-- @param event Name of event.
+	-- @param handler Handler of event.	
 	once: (event, handler) =>
-		@_touch event
+		@_event_touch event
 
 		-- aliases
 		handlers = @_events[event]
-		once     = @_once[event]
+		once     = @_once_events[event]
 
 		if handler
 			-- add event to "handlers" and "once" tables
@@ -43,14 +56,15 @@ class EventEmitter
 		-- chaining
 		return @
 
-
-	-- call handlers, that subscribes to event. "..." is arguments
+	--- Call handlers, that subscribes to event.
+	-- @param event Name of event.
+	-- @param ... Arguments, that will be passed to handlers.
 	emit: (event, ...) =>
-		@_touch event
+		@_event_touch event
 
 		-- aliases
 		handlers = @_events[event]
-		once     = @_once[event]
+		once     = @_once_events[event]
 
 		for num, handler in ipairs handlers
 			-- call handler with arguments
@@ -66,13 +80,24 @@ class EventEmitter
 		-- chaining
 		return @
 
-	--    event, handlers
+	--- Remove handlers from EventEmitter.
+	-- @param event Name of event. If it's nil, all handlers will be removed from EventEmitter.
+	-- @param handler Handler function. If it's nil and `event` isn't nil, all handlers for event `event` will be removed from EventEmitter. If it's nil and `event` is nil, all handlers will be removed from EventEmitter.
 	off: (event, handler) =>
-		@_touch event
+
+		unless event
+			for name, _ in @_events
+				@_events[name] = {}
+
+			for name, _ in @_once_events
+				@_once_events[name] = {}
+
+
+		@_event_touch event
 
 		-- aliases
 		handlers = @_events[event]
-		once     = @_once[event]
+		once     = @_once_events[event]
 
 		-- remove all handlers for choosen event
 		unless handler
@@ -94,10 +119,11 @@ class EventEmitter
 		-- chaining
 		return @
 
-	-- get listeners
+	--- Get listeners of event.
+	-- @param event Name of event.
 	listeners: (event) =>
 		assert event, "Event is nil!"
-		@_touch event
+		@_event_touch event
 		return @_events[event]
 
 return EventEmitter

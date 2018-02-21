@@ -1,6 +1,6 @@
 locale = require 'locale'
 
-lc = locale.new 'examples.locale-example-en', 'examples.locale-example-ru'
+lc = locale.new 'examples.locale.en', 'examples.locale.ru'
 
 -- get system locale, wow!
 lc.current = locale.get!
@@ -12,7 +12,7 @@ lc.current = locale.get!
 data = lc.values
 
 time = 0
-font = love.graphics.newFont 'examples/fixtures/font.ttf', 50
+font = love.graphics.newFont 'examples/asset/fixtures/font.ttf', 50
 
 love.update = (dt) ->
 	-- switch locales every second

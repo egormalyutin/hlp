@@ -133,7 +133,7 @@ Localization = (...) ->
 				values.current = v
 				if values.locales[values.current]
 					private.mount values, values.current
-				else if not values.locales[values.fallback]
+				elseif not values.locales[values.fallback]
 					reporter.notFoundFallback!
 				else
 					private.mount values, values.fallback

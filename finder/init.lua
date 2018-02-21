@@ -2,10 +2,9 @@ local socket = require('socket')
 local current = (...)
 local load
 load = function(path)
-  local LC_PATH
-  local succ, loaded = pcall(require, LC_PATH)
+  local succ, loaded = pcall(require, path)
   if not (succ) then
-    LC_PATH = current .. '.' .. path
+    local LC_PATH = current .. '.' .. path
     succ, loaded = pcall(require, LC_PATH)
     if not (succ) then
       LC_PATH = current:gsub("%.[^%..]+$", "") .. '.' .. path
@@ -15,7 +14,7 @@ load = function(path)
       end
     end
   end
-  return loaded, LC_PATH
+  return loaded
 end
 local EventEmitter = load('event')
 local PORT = 4550
@@ -33,6 +32,15 @@ isIn = function(arr, item)
   end
   return false
 end
+local indexOf
+indexOf = function(arr, item)
+  for num, a in ipairs(arr) do
+    if item.host == a.host and item.port == a.port then
+      return num
+    end
+  end
+  return false
+end
 local Server
 do
   local _class_0
@@ -43,16 +51,36 @@ do
       if message == self.handshake then
         local obj = {
           host = host,
-          port = port
+          port = port,
+          timeout = 0
         }
-        if not (isIn(self._results, obj)) then
+        self.udp:sendto(self._checked, host, port)
+        local index = indexOf(self._results, obj)
+        if index then
+          self._results[index].timeout = 0
+        else
           table.insert(self._results, obj)
-          self.udp:sendto(self.check(message), host, port)
-          return self:emit('connect', host)
+          self:emit('connect', host)
+        end
+      elseif message == self._closed_handshake then
+        for num, r in ipairs(self._results) do
+          if (r.host == host) and (r.port == port) then
+            table.remove(r, num)
+          end
+        end
+      end
+      for num, result in ipairs(self._results) do
+        result.timeout = result.timeout + 1
+        if result.timeout > self.closedTimeout then
+          self:emit('disconnect', result.host)
+          table.remove(self._results, num)
         end
       end
     end,
     close = function(self)
+      for num, res in ipairs(self._results) do
+        self.udp:sendto(self._closed_handshake, res.host, res.port)
+      end
       return self.udp:close()
     end
   }
@@ -69,6 +97,9 @@ do
       self.timeout = settings.timeout or 0.1
       self.handshake = settings.handshake or HANDSHAKE
       self.check = settings.check or CHECK
+      self.closedTimeout = settings.closedTimeout or settings.closed_timeout or settings.ct or 5
+      self._checked = self.check(self.handshake)
+      self._closed_handshake = self._checked .. ':closed'
       if type(self.check) == "string" then
         local oldCheck = self.check
         self.check = function(a)
@@ -121,11 +152,28 @@ do
       if message == self._checked then
         local obj = {
           host = host,
-          port = port
+          port = port,
+          timeout = 0
         }
-        if not (isIn(self._results, obj)) then
+        local index = indexOf(self._results, obj)
+        if index then
+          self._results[index].timeout = 0
+        else
           table.insert(self._results, obj)
           self:emit('connect', host)
+        end
+      elseif message == self._closed_handshake then
+        for num, r in ipairs(self._results) do
+          if (r.host == host) and (r.port == port) then
+            table.remove(r, num)
+          end
+        end
+      end
+      for num, result in ipairs(self._results) do
+        result.timeout = result.timeout + 1
+        if result.timeout > self.closedTimeout then
+          self:emit('disconnect', result.host)
+          table.remove(self._results, num)
         end
       end
       if err then
@@ -134,6 +182,9 @@ do
       return self.udp:sendto(self.handshake, "255.255.255.255", self.port)
     end,
     close = function(self)
+      for num, res in ipairs(self._results) do
+        self.udp:sendto(self._closed_handshake, res.host, res.port)
+      end
       return self.udp:close()
     end
   }
@@ -151,6 +202,7 @@ do
       self.timeout = settings.timeout or 0.1
       self.handshake = settings.handshake or HANDSHAKE
       self.check = settings.check or CHECK
+      self.closedTimeout = settings.closedTimeout or settings.closed_timeout or settings.ct or 5
       if type(self.check) == "string" then
         local oldCheck = self.check
         self.check = function(a)
@@ -166,6 +218,7 @@ do
       self.udp:setoption('broadcast', true)
       self.udp:settimeout(self.timeout)
       self._checked = self.check(self.handshake)
+      self._closed_handshake = self._checked .. ':closed'
       self._results = { }
     end,
     __base = _base_0,

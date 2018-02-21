@@ -1,5 +1,4 @@
 -- uncomment needed:
--- require('examples.asset-dir-example')
--- require('examples.ps-example')
--- require('examples.locale-example')
-require('examples.finder-example')
+-- require('examples.asset')
+-- require('examples.locale')
+-- require('examples.finder')

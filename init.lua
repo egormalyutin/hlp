@@ -19,5 +19,6 @@ return {
   asset = load('asset'),
   locale = load('locale'),
   ps = load('ps'),
-  csv = load('csv')
+  csv = load('csv'),
+  Finder = load('finder')
 }

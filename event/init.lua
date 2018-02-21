@@ -1,17 +1,26 @@
+local indexOf
+indexOf = function(a, b)
+  for num, item in ipairs(a) do
+    if item == b then
+      return num
+    end
+  end
+  return -1
+end
 local EventEmitter
 do
   local _class_0
   local _base_0 = {
-    _touch = function(self, event)
+    _event_touch = function(self, event)
       if not (self._events[event]) then
         self._events[event] = { }
       end
-      if not (self._once[event]) then
-        self._once[event] = { }
+      if not (self._once_events[event]) then
+        self._once_events[event] = { }
       end
     end,
     on = function(self, event, handler)
-      self:_touch(event)
+      self:_event_touch(event)
       local handlers = self._events[event]
       if handler then
         table.insert(handlers, handler)
@@ -19,9 +28,9 @@ do
       return self
     end,
     once = function(self, event, handler)
-      self:_touch(event)
+      self:_event_touch(event)
       local handlers = self._events[event]
-      local once = self._once[event]
+      local once = self._once_events[event]
       if handler then
         table.insert(handlers, handler)
         table.insert(once, handler)
@@ -29,9 +38,9 @@ do
       return self
     end,
     emit = function(self, event, ...)
-      self:_touch(event)
+      self:_event_touch(event)
       local handlers = self._events[event]
-      local once = self._once[event]
+      local once = self._once_events[event]
       for num, handler in ipairs(handlers) do
         handler(...)
         local index = indexOf(once, handler)
@@ -43,9 +52,17 @@ do
       return self
     end,
     off = function(self, event, handler)
-      self:_touch(event)
+      if not (event) then
+        for name, _ in self._events do
+          self._events[name] = { }
+        end
+        for name, _ in self._once_events do
+          self._once_events[name] = { }
+        end
+      end
+      self:_event_touch(event)
       local handlers = self._events[event]
-      local once = self._once[event]
+      local once = self._once_events[event]
       if not (handler) then
         self._events[event] = { }
       else
@@ -62,7 +79,7 @@ do
     end,
     listeners = function(self, event)
       assert(event, "Event is nil!")
-      self:_touch(event)
+      self:_event_touch(event)
       return self._events[event]
     end
   }
@@ -70,7 +87,7 @@ do
   _class_0 = setmetatable({
     __init = function(self)
       self._events = { }
-      self._once = { }
+      self._once_events = { }
     end,
     __base = _base_0,
     __name = "EventEmitter"

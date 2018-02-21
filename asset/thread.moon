@@ -1,22 +1,21 @@
-path, ext, id, channel, LOADERS_PATH = ...
+path, format, CHANNEL_NAME, current = ...
 
-loaders = require LOADERS_PATH
+load = (path) ->
+	succ, loaded = pcall require, path
+	unless succ
+		LC_PATH = current .. '.' .. path
+		succ, loaded = pcall require, LC_PATH
+		unless succ
+			LC_PATH = current\gsub("%.[^%..]+$", "") .. '.' .. path
+			succ, loaded = pcall require, LC_PATH
+			unless succ
+				error loaded
 
-channel = love.thread.getChannel(channel)
+	return loaded
 
-local loader, resource
+loaders = load 'loaders'
+channel = love.thread.getChannel CHANNEL_NAME
 
-if loaders[ext]
-	loader = loaders[ext]
-	resource = loader.thread path
+data = loaders[format].thread path
 
-if resource
-	channel\push 
-		:id
-		:resource
-		success: true
-else
-	channel\push 
-		:id
-		error: 'Failed to load resource ' .. path
-		success: false
+channel\push data

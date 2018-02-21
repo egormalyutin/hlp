@@ -1,1 +1,4 @@
-return require('examples.finder-example')
+-- uncomment needed:
+-- require('examples.asset')
+-- require('examples.locale')
+-- require('examples.finder')
